@@ -1,8 +1,6 @@
 <?php
 require_once 'functions.php';
 
-// Start the session
-session_start();
 
 // Initialize errors and success messages
 $login_errors = [];

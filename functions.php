@@ -5,26 +5,35 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /**
- * Establishes a connection to the database.
- * 
- * @return mysqli The database connection object.
+ * Establish and return a database connection.
+ *
+ * @return mysqli|null Database connection object, or null if connection fails.
  */
 function dbConnect() {
-    $host = "localhost";
-    $user = "root";
-    $password = "";
-    $dbname = "dct-ccs-finals";
+    $DbConfig = [
+        'host' => 'localhost',
+        'user' => 'root',
+        'password' => '',
+        'database' => 'dct-ccs-finals'
+    ];
 
-    // Create a new database connection
-    $conn = new mysqli($host, $user, $password, $dbname);
+    // Create a new database connection.
+    $connection = new mysqli(
+        $DbConfig['host'], 
+        $DbConfig['user'], 
+        $DbConfig['password'], 
+        $DbConfig['database']
+    );
 
-    // Check if the connection failed
-    if ($conn->connect_error) {
-        die("Database connection failed: " . $conn->connect_error);
+    // Check if connection was successful and log error if not.
+    if ($connection->connect_error) {
+        error_log("Connection failed: " . $connection->connect_error, 3, '/var/log/db_errors.log');
+        return null; // Return null if connection failed.
     }
 
-    return $conn;
+    return $connection; // Return the connection object.
 }
+
 
 /**
  * Authenticates a user using their email and password.
@@ -139,22 +148,16 @@ function checkDuplicateSubject($subject_code, $subject_name) {
     return null; // No duplicates found
 }
 
-/**
- * Ensures only authenticated users can access a page.
- * Redirects unauthenticated users to the login page.
- */
 function guard() {
-
-    // Check if the user is authenticated
-    if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    if (!isset($_SESSION['email']) || empty($_SESSION['email'])) {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
         $host = $_SERVER['HTTP_HOST'];
-        $baseURL = $protocol . $host . '/index.php'; // Redirect to the login page
+        $baseURL = $protocol . $host . '/'; 
 
-        header("Location: " . $baseURL);
         exit();
     }
 }
+
 function getSelectedStudentData($student_id) {
     $connection = dbConnect();
     $query = "SELECT * FROM students WHERE id = ?";
